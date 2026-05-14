@@ -48,11 +48,6 @@ uid="${args[$((skipIndex+2))]}"; validateArg "UID" "$uid" "$reUid" || exit 1
 gid="${args[$((skipIndex+3))]}"; validateArg "GID" "$gid" "$reGid" || exit 1
 dir="${args[$((skipIndex+4))]}"; validateArg "dirs" "$dir" "$reDir" || exit 1
 
-if getent passwd "$user" > /dev/null; then
-    log "WARNING: User \"$user\" already exists. Skipping."
-    exit 0
-fi
-
 if [ -n "$uid" ]; then
     useraddOptions+=(--non-unique --uid "$uid")
 fi
@@ -65,10 +60,12 @@ if [ -n "$gid" ]; then
     useraddOptions+=(--gid "$gid")
 fi
 
-useradd "${useraddOptions[@]}" "$user"
-mkdir -p "/home/$user"
-chown root:root "/home/$user"
-chmod 755 "/home/$user"
+if ! id "$user" &>/dev/null; then
+    useradd "${useraddOptions[@]}" "$user"
+    mkdir -p "/home/$user"
+    chown root:root "/home/$user"
+    chmod 755 "/home/$user"
+fi
 
 # Retrieving user id to use it in chown commands instead of the user name
 # to avoid problems on alpine when the user name contains a '.'
@@ -87,7 +84,6 @@ if [ -d "$userKeysQueuedDir" ]; then
     userKeysAllowedFile="/home/$user/.ssh/authorized_keys"
 
     for publickey in "$userKeysQueuedDir"/*; do
-        log "  Using $publickey"
         echo "$(cat "$publickey")" >> "$userKeysAllowedFileTmp"
     done
 
