@@ -62,7 +62,7 @@ fi
 
 if ! id "$user" &>/dev/null; then
     useradd "${useraddOptions[@]}" "$user"
-    mkdir -p "/home/$user"
+    mkdir -p "/home/$user/sftp"
     chown root:root "/home/$user"
     chmod 755 "/home/$user"
 fi
